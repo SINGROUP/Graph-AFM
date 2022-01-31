@@ -1,0 +1,7 @@
+*.pyc
+*.png
+*.so
+*.o
+*.hdf5
+# ignore compiled python 3 files
+__pycache__

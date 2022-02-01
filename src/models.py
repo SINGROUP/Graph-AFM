@@ -1,4 +1,5 @@
 
+import os
 import random
 import numpy as np
 
@@ -727,3 +728,74 @@ class GridMultiAtomLoss(nn.Module):
         min_inds = torch.stack(min_inds, dim=0)
         
         return loss, min_inds
+
+def load_pretrained_model(weights_type='random', device='cpu'):
+    '''
+    Load GridGraphImgNet model with pretrained weights.
+
+    Arguments:
+        weights_type: 'random', 'y', or 'z'. Type of weights to load. Different types correspond to 
+            different graph constructions orders used during training.
+
+    Returns: GridGraphImgNet.
+    '''
+
+    weights_dir = os.path.abspath(os.path.split(__file__)[0] + '/../pretrained_weights')
+    if weights_type == 'random':
+        weights_path = os.path.join(weights_dir, 'model_random.pth')
+    elif weights_type == 'y':
+        weights_path = os.path.join(weights_dir, 'model_y.pth')
+    elif weights_type == 'z':
+        weights_path = os.path.join(weights_dir, 'model_z.pth')
+    else:
+        raise ValueError(f'Unrecognized weights type `{weights_type}`.')
+
+    gnn = GNN(
+        hidden_size     = 64,
+        iters           = 3,
+        n_node_features = 20,
+        n_edge_features = 20
+    )
+    cnn = AttentionEncoderUNet(
+        conv3d_in_channels      = 1,
+        conv3d_block_channels   = [4, 8, 16, 32],
+        conv3d_block_depth      = 2,
+        encoding_block_channels = [4, 8, 16, 32],
+        encoding_block_depth    = 2,
+        upscale_block_channels  = [32, 16, 8],
+        upscale_block_depth     = 2,
+        upscale_block_channels2 = [32, 16, 8],
+        upscale_block_depth2    = 2,
+        attention_channels      = [32, 32, 32],
+        query_size              = 64,
+        res_connections         = True,
+        hidden_dense_units      = [],
+        out_units               = 128,
+        activation              = 'relu',
+        padding_mode            = 'zeros',
+        pool_type               = 'avg',
+        pool_z_strides          = [2, 1, 2],
+        decoder_z_sizes         = [4, 10, 20],
+        attention_activation    = 'softmax'
+    )
+    model = GridGraphImgNet(
+        cnn                  = cnn,
+        gnn                  = gnn,
+        n_classes            = 5,
+        expansion_hidden     = 32,
+        expanded_size        = 128,
+        query_hidden         = 64,
+        class_hidden         = 32,
+        edge_hidden          = 32,
+        peak_std             = 0.25,
+        match_method         = 'msd_norm',
+        match_threshold      = 0.7,
+        dist_threshold       = 0.5,
+        teacher_forcing_rate = 1.0,
+        device               = device
+    )
+
+    state = torch.load(weights_path)
+    model.load_state_dict(state['model_params'])
+
+    return model

@@ -1,0 +1,22 @@
+name: graph-afm
+channels:
+  - pytorch
+  - nvidia/label/cuda-11.3.1
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - pytorch=1.10
+  - cuda
+  - ninja
+  - torchvision
+  - matplotlib>=3.3.0
+  - numpy
+  - scipy
+  - pyopencl
+  - ocl-icd-system
+  - scikit-image
+  - gxx=8.5.0
+  - h5py
+  

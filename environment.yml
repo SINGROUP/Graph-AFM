@@ -12,7 +12,7 @@ dependencies:
   - ninja
   - torchvision
   - matplotlib>=3.3.0
-  - numpy
+  - numpy==1.21.4
   - scipy
   - pyopencl
   - ocl-icd-system

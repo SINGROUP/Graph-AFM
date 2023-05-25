@@ -676,6 +676,19 @@ def find_gaussian_peaks(pos_dist, box_borders, match_threshold=0.7, std=0.3, met
 
     return xyzs, matches, labels
 
+def _is_within_directory(directory, target):
+    abs_directory = os.path.abspath(directory)
+    abs_target = os.path.abspath(target)
+    prefix = os.path.commonprefix([abs_directory, abs_target])
+    return prefix == abs_directory
+            
+def _safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+    for member in tar.getmembers():
+        member_path = os.path.join(path, member.name)
+        if not _is_within_directory(path, member_path):
+            raise Exception("Attempted Path Traversal in Tar File")
+    tar.extractall(path, members, numeric_owner=numeric_owner) 
+
 def download_molecules(save_path='./Molecules', verbose=1):
     '''
     Download database of molecules.
@@ -692,7 +705,7 @@ def download_molecules(save_path='./Molecules', verbose=1):
         if verbose: print('Extracting tar archive...')
         with tarfile.open(temp_file, 'r') as f:
             base_dir = os.path.normpath(f.getmembers()[0].name).split(os.sep)[0]
-            f.extractall()
+            _safe_extract(f)
         if verbose: print('Done extracting.')
         shutil.move(base_dir, save_path)
         os.remove(temp_file)
